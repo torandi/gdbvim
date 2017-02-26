@@ -10,10 +10,7 @@
 "
 " See :help gdbvim.txt for documentation
 
-let s:BpSet = ""
-
-let s:bpFilename = ""
-let s:bpLineNumber = -1
+let s:BpSet = {}
 
 " Prevent multiple loading, allow commenting it out
 if exists("loaded_gdbvim")
@@ -39,11 +36,10 @@ sign define breakpoint linehl=DebugBreak text=##
 sign define current linehl=DebugStop text=>>
 
 function! ClearBreakpoints()
-    call MvIterCreate(s:BpSet, "|", "Breaks")
-    while MvIterHasNext("Breaks")
-        silent call Gdb_command("clear ".MvIterNext("Breaks"))
-    endwhile
-    call MvIterDestroy("Breaks")
+	for val in values(s:BpSet)
+        silent call Gdb_command("clear ".val)
+	endfor
+	s:BpSet = {}
 endfunction
 
 " Get ready for communication
@@ -65,7 +61,7 @@ function! Gdb_interf_init(fifo_name, pwd)
     command -nargs=+ Gdb        :call Gdb_command(<q-args>, v:count)
   endif
 
-	echo 'GDB Connected
+	echo 'GDB Connected'
 endfunction
 
 function Gdb_interf_close()
@@ -74,7 +70,7 @@ function Gdb_interf_close()
     silent call s:DumpBreakpoints()
     redir END
     sign unplace *
-    let s:BpSet = ""
+    let s:BpSet = {}
     let s:having_partner=0
 	echo 'GDB Connection Closed'
 endfunction
@@ -85,14 +81,14 @@ function Gdb_Bpt(id, file, linenum)
         endif
         execute "sign unplace ". a:id
         execute "sign place " .  a:id ." name=breakpoint line=".a:linenum." file=".a:file
-        let s:BpSet = MvAddElement(s:BpSet, "|", a:file.":".a:linenum)
+		let s:BpSet[a:id] = fnamemodify(a:file, ":p") . ":" . a:linenum
 		echo "Set breakpoint at " . a:file . ":" . a:linenum
 endfunction
 
 function Gdb_NoBpt(id)
         execute "sign unplace ". a:id
-        let s:BpSet = MvRemoveElement(s:BpSet, "|", s:bpFilename.":".s:bpLineNumber)
-		echo "Removed breakpoint from " . a:file . ":" . a:linenum
+		let entry = remove(s:BpSet,a:id)
+		echo "Removed breakpoint from " . entry
 endfunction
 
 function Gdb_CurrFileLine(file, line)
@@ -130,13 +126,19 @@ endfun
 
 " Toggle breakpoints
 function Gdb_togglebreak(name, line)
-    if MvIndexOfElement(s:BpSet, "|", a:name.":".a:line) != -1
+	let needle = fnamemodify(a:name, ":p") . ":" . a:line
+	let found=0
+	for [key,value] in items(s:BpSet)
+		if value == needle
+			let found=1
+			break
+		endif
+	endfor
+    if found == 1
         silent call Gdb_command("clear ".a:name.":".a:line)
     else
         silent call Gdb_command("break ".a:name.":".a:line)
     endif
-    let s:bpFilename = a:name
-    let s:bpLineNumber = a:line
 endfun
 
 " Init the menu
@@ -179,5 +181,7 @@ endfunction
 
 " Dump the breakpoints to the file
 function s:DumpBreakpoints()
-  echo s:BpSet
+	for val in values(s:BpSet)
+		echo val
+	endfor
 endfunction
