@@ -193,6 +193,14 @@ sub worker # {{{
             vim_call($_);
             print RL_WTR;
         }
+		elsif (
+			s/Continuing/$1/
+			)
+		{
+			chomp;
+			vim_call("Gdb_NoCurrLine()");
+			print RL_WTR;
+		}
         elsif (
                 s/Deleted breakpoints ([ 0-9]+)/$1/
               )

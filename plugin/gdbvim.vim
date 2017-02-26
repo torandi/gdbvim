@@ -8,7 +8,7 @@
 "
 " Feedback welcome.
 "
-" See :help gdbvim.txt for documentation 
+" See :help gdbvim.txt for documentation
 
 let s:BpSet = ""
 
@@ -33,10 +33,10 @@ let loaded_gdbvim = 1
 let s:having_partner=0
 
 " This used to be in Gdb_interf_init, but older vims crashed on it
-highlight DebugBreak guibg=darkred guifg=white ctermbg=darkred ctermfg=white
-highlight DebugStop guibg=lightgreen guifg=white ctermbg=lightgreen ctermfg=white
-sign define breakpoint linehl=DebugBreak
-sign define current linehl=DebugStop
+" highlight DebugBreak cterm=bold
+" highlight DebugStop guibg=lightgreen guifg=white ctermbg=lightgreen ctermfg=white
+sign define breakpoint linehl=DebugBreak text=##
+sign define current linehl=DebugStop text=>>
 
 function! ClearBreakpoints()
     call MvIterCreate(s:BpSet, "|", "Breaks")
@@ -48,13 +48,13 @@ endfunction
 
 " Get ready for communication
 function! Gdb_interf_init(fifo_name, pwd)
-  
+
   if s:having_partner " sanity check
     echo "Oops, one communication is already running"
     return
   endif
   let s:having_partner=1
-  
+
   let s:fifo_name = a:fifo_name " Make use of parameters
   execute "cd ". a:pwd
 
@@ -65,6 +65,7 @@ function! Gdb_interf_init(fifo_name, pwd)
     command -nargs=+ Gdb        :call Gdb_command(<q-args>, v:count)
   endif
 
+	echo 'GDB Connected
 endfunction
 
 function Gdb_interf_close()
@@ -75,6 +76,7 @@ function Gdb_interf_close()
     sign unplace *
     let s:BpSet = ""
     let s:having_partner=0
+	echo 'GDB Connection Closed'
 endfunction
 
 function Gdb_Bpt(id, file, linenum)
@@ -84,11 +86,13 @@ function Gdb_Bpt(id, file, linenum)
         execute "sign unplace ". a:id
         execute "sign place " .  a:id ." name=breakpoint line=".a:linenum." file=".a:file
         let s:BpSet = MvAddElement(s:BpSet, "|", a:file.":".a:linenum)
+		echo "Set breakpoint at " . a:file . ":" . a:linenum
 endfunction
 
 function Gdb_NoBpt(id)
         execute "sign unplace ". a:id
         let s:BpSet = MvRemoveElement(s:BpSet, "|", s:bpFilename.":".s:bpLineNumber)
+		echo "Removed breakpoint from " . a:file . ":" . a:linenum
 endfunction
 
 function Gdb_CurrFileLine(file, line)
@@ -106,6 +110,10 @@ function Gdb_CurrFileLine(file, line)
         execute a:line
         :silent! foldopen!
 endf
+
+function Gdb_NoCurrLine()
+        execute "sign unplace ". 3
+endfunction
 
 noremap <unique> <script> <Plug>SetBreakpoint :call <SID>SetBreakpoint()<CR>
 
@@ -133,12 +141,12 @@ endfun
 
 " Init the menu
 function s:InitMenu()
-    nmenu Gdb.Command :Gdb 
+    nmenu Gdb.Command :Gdb
 
     nmenu Gdb.Debug.Run<tab><C-F5>      :Gdb run<CR>
-    nmenu Gdb.Debug.Step<tab><F7>       :Gdb step<CR>
-    nmenu Gdb.Debug.Next<tab><F8>       :Gdb next<CR>
-    nmenu Gdb.Debug.Finish<tab><F6>     :Gdb finish<CR>
+    nmenu Gdb.Debug.Step<tab><F11>       :Gdb step<CR>
+    nmenu Gdb.Debug.Next<tab><F10>       :Gdb next<CR>
+    nmenu Gdb.Debug.Finish<tab><F12>     :Gdb finish<CR>
     nmenu Gdb.Debug.Continue<tab><F5>   :Gdb cont<CR>
     nmenu Gdb.Debug.Stop                :Gdb quit<CR>
 
@@ -159,12 +167,12 @@ endfunction
 function s:Gdb_shortcuts()
     nmap <unique> <F9>          :call Gdb_togglebreak(bufname("%"), line("."))<CR>
     nmap <unique> <C-F5>        :Gdb run<CR>
-    nmap <unique> <F7>          :Gdb step<CR>
-    nmap <unique> <F8>          :Gdb next<CR>
-    nmap <unique> <F6>          :Gdb finish<CR>
+    nmap <unique> <F11>          :Gdb step<CR>
+    nmap <unique> <F10>          :Gdb next<CR>
+    nmap <unique> <F12>          :Gdb finish<CR>
     nmap <unique> <F5>          :Gdb continue<CR>
     vmap <unique> <C-P>         "gy:Gdb print <C-R>g<CR>
-    nmap <unique> <C-P>         :call Gdb_command("print ".expand("<cword>"))<CR> 
+    nmap <unique> <C-P>         :call Gdb_command("print ".expand("<cword>"))<CR>
     call s:InitMenu()
 endfunction
 
