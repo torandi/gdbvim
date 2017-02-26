@@ -63,12 +63,7 @@ $VIMNAME=$server if(defined($server));
 $runnings=`vim -u NONE -U NONE --serverlist`; # all running vim servers
 if(not ($runnings=~/^$VIMNAME$/m)) # test if server is not already there
 {
-    # start gvim server
-    $result = system ("gvim --servername $VIMNAME");
-    if ($result != 0)
-    {
-        die "error starting gvim server: $!";
-    }
+	die "No server running with name $VIMNAME";
 };
 
 # create fifo - some systems have mkfifo and some mknod
