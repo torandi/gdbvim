@@ -152,7 +152,7 @@ function s:InitMenu()
 
     vmenu Gdb.Watch.Variable<tab><C-P>  "gy:Gdb print <C-R>g<CR>
     nmenu Gdb.Watch.Variable<tab><C-P>  :call Gdb_command("print ".expand("<cword>"))<CR>
-    nmenu Gdb.Watch.Call\ stacks        :Gdb bt<CR>
+    nmenu Gdb.Watch.Call\ stacks<tab><F8>        :Gdb bt<CR>
 
     nmenu Gdb.Breakpoints.Toggle\ break<tab><F9>            :call Gdb_togglebreak(bufname("%"), line("."))<CR>
     nmenu Gdb.Breakpoints.Clear\ all\ breakpoints           :call ClearBreakpoints()<CR>
@@ -171,6 +171,7 @@ function s:Gdb_shortcuts()
     nmap <unique> <F10>          :Gdb next<CR>
     nmap <unique> <F12>          :Gdb finish<CR>
     nmap <unique> <F5>          :Gdb continue<CR>
+    nmap <unique> <F8>          :Gdb bt<CR>
     vmap <unique> <C-P>         "gy:Gdb print <C-R>g<CR>
     nmap <unique> <C-P>         :call Gdb_command("print ".expand("<cword>"))<CR>
     call s:InitMenu()
